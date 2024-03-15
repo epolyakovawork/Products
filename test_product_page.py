@@ -1,116 +1,108 @@
 import pytest
-from selenium.common.exceptions import NoAlertPresentException
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.by import By
-from selenium import webdriver
-from .pages.main_page import MainPage
-from .pages.login_page import LoginPage
-from .pages.locators import LoginPageLocators
 import time
-import math
+from .pages.product_page import ProductPage
+from .pages.login_page import LoginPage
+from .pages.basket_page import BasketPage
 
-def test_guest_can_add_product_to_basket(browser):
-    link = "https://selenium1py.pythonanywhere.com/ru/catalogue/coders-at-work_207/?promo=offer0"
-    page = MainPage(browser, link)    
+
+@pytest.mark.need_review
+@pytest.mark.parametrize('link', ["http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer0",
+                                  "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer1",
+                                  "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer2",
+                                  "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer3",
+                                  "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer4",
+                                  "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer5",
+                                  "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer6",
+                                  pytest.param(
+                                      "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer7",
+                                      marks=pytest.mark.xfail),
+                                  "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer8",
+                                  "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer9"])
+def test_guest_can_add_product_to_basket(browser, link):
+    page = ProductPage(browser, link)
     page.open()
-    time.sleep(7)
-    addToBasket = browser.find_element(By.CSS_SELECTOR, ".btn.btn-lg.btn-primary.btn-add-to-basket")
-    addToBasket.click()
-    time.sleep(5)   
-    alert = browser.switch_to.alert
-    x = alert.text.split(" ")[2]
-    answer = str(math.log(abs((12 * math.sin(float(x))))))
-    print(answer)
-    alert.send_keys(answer)
-    alert.accept()
-    try:
-        alert = browser.switch_to.alert
-        alert_text = alert.text
-        print(f"Your code: {alert_text}")
-        alert.accept()
-    except NoAlertPresentException:
-        print("No second alert presented")
-        time.sleep(5)
-        browser.quit()
+    page.add_to_cart()
+    page.solve_quiz_and_get_code()
+    page.good_was_added()
 
+
+@pytest.mark.skip
+def test_guest_cant_see_success_message_after_adding_product_to_basket(browser):
+    link = "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer0"
+    page = ProductPage(browser, link)
+    page.open()
+    page.add_to_cart()
+    page.solve_quiz_and_get_code()
+    page.should_not_be_success_message()
+
+
+def test_guest_cant_see_success_message(browser):
+    link = "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer0"
+    page = ProductPage(browser, link)
+    page.open()
+    page.should_not_be_success_message()
+
+
+@pytest.mark.skip
+def test_message_disappeared_after_adding_product_to_basket(browser):
+    link = "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer0"
+    page = ProductPage(browser, link)
+    page.open()
+    page.add_to_cart()
+    page.solve_quiz_and_get_code()
+    page.success_message_is_disappeared()
+
+
+def test_guest_should_see_login_link_on_product_page(browser):
+    link = "http://selenium1py.pythonanywhere.com/en-gb/catalogue/the-city-and-the-stars_95/"
+    page = ProductPage(browser, link)
+    page.open()
+    page.should_be_login_link()
+
+
+@pytest.mark.need_review
 def test_guest_can_go_to_login_page_from_product_page(browser):
-    link = "https://selenium1py.pythonanywhere.com/ru/catalogue/coders-at-work_207/?promo=offer0"
-    page = MainPage(browser, link)    
+    link = "http://selenium1py.pythonanywhere.com/en-gb/catalogue/the-city-and-the-stars_95/"
+    page = ProductPage(browser, link)
     page.open()
-    time.sleep(7)
     page.go_to_login_page()
-    time.sleep(7)
-    mail = browser.find_element(By.CSS_SELECTOR, "#id_registration-email")
-    mail.send_keys("testmail@mail.com")
-    pass1 = browser.find_element(By.CSS_SELECTOR, "#id_registration-password1")
-    pass1.send_keys("123QWE!@#")
-    pass1 = browser.find_element(By.CSS_SELECTOR, "#id_registration-password2")
-    pass1.send_keys("123QWE!@#")
-    btn = browser.find_element(By.XPATH, "/html/body/div[2]/div/div[2]/div[2]/div/div[2]/form/button")
-    btn.click()
+    login_page = LoginPage(browser, browser.current_url)
+    login_page.should_be_login_page()
 
-def test_user_can_add_product_to_basket(browser):
-    link = "https://selenium1py.pythonanywhere.com/ru/catalogue/coders-at-work_207/?promo=offer0"
-    page = MainPage(browser, link)    
-    page.open()
-    time.sleep(7)
-    page.go_to_login_page()
-    time.sleep(7)
-    mail2 = browser.find_element(By.CSS_SELECTOR, "#id_login-username")
-    mail2.send_keys("testmail@mail.com")
-    pass3 = browser.find_element(By.CSS_SELECTOR, "#id_login-password")
-    pass3.send_keys("123QWE!@#")
-    btn = browser.find_element(By.XPATH, "/html/body/div[2]/div/div[2]/div[2]/div/div[1]/form/button")
-    btn.click()
-    linkBook = "https://selenium1py.pythonanywhere.com/ru/catalogue/coders-at-work_207/?promo=offer0"
-    page = MainPage(browser, linkBook)    
-    page.open()
-    time.sleep(7)
-    addToBasket = browser.find_element(By.CSS_SELECTOR, ".btn.btn-lg.btn-primary.btn-add-to-basket")
-    addToBasket.click()
-    time.sleep(5)   
-    alert = browser.switch_to.alert
-    x = alert.text.split(" ")[2]
-    answer = str(math.log(abs((12 * math.sin(float(x))))))
-    print(answer)
-    alert.send_keys(answer)
-    alert.accept()
-    try:
-        alert = browser.switch_to.alert
-        alert_text = alert.text
-        print(f"Your code: {alert_text}")
-        alert.accept()
-    except NoAlertPresentException:
-        print("No second alert presented")
-        time.sleep(5)
-        browser.quit()
-    
-    
+
+@pytest.mark.need_review
 def test_guest_cant_see_product_in_basket_opened_from_product_page(browser):
-    link = "https://selenium1py.pythonanywhere.com/ru/catalogue/coders-at-work_207/?promo=offer0"
-    page = MainPage(browser, link)    
+    link = "http://selenium1py.pythonanywhere.com/en-gb/catalogue/the-city-and-the-stars_95/"
+    page = ProductPage(browser, link)
     page.open()
-    time.sleep(7)
-    addToBasket = browser.find_element(By.CSS_SELECTOR, ".btn.btn-lg.btn-primary.btn-add-to-basket")
-    addToBasket.click()
-    time.sleep(5)   
-    alert = browser.switch_to.alert
-    x = alert.text.split(" ")[2]
-    answer = str(math.log(abs((12 * math.sin(float(x))))))
-    print(answer)
-    alert.send_keys(answer)
-    alert.accept()
-    try:
-        alert = browser.switch_to.alert
-        alert_text = alert.text
-        print(f"Your code: {alert_text}")
-        alert.accept()
-    except NoAlertPresentException:
-        print("No second alert presented")
-        time.sleep(5)
-        book = browser.find_element(By.CSS_SELECTOR, "h1")
-    basket = browser.find_element(By.CSS_SELECTOR, ".btn-group .btn.btn-default")
-    basket.click()
-    time.sleep(10)
-    browser.quit()
-    
+    page.go_to_basket()
+    basket_page = BasketPage(browser, browser.current_url)
+    basket_page.basket_should_be_empty()
+    basket_page.should_be_text_that_basket_is_empty()
+
+
+class TestUserAddToBasketFromProductPage():
+    @pytest.fixture(scope="function", autouse=True)
+    def setup(self, browser):
+        link = "https://selenium1py.pythonanywhere.com/en-gb/accounts/login/"
+        page = LoginPage(browser, link)
+        page.open()
+        email = str(time.time()) + "@fakemail.org"
+        password = "kshdyru8735"
+        page.register_new_user(email, password)
+        page.should_be_authorized_user()
+
+    def test_user_cant_see_success_message(self, browser):
+        link = "http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer0"
+        page = ProductPage(browser, link)
+        page.open()
+        page.should_not_be_success_message()
+
+    @pytest.mark.need_review
+    def test_user_can_add_product_to_basket(self, browser):
+        link = "http://selenium1py.pythonanywhere.com/catalogue/the-shellcoders-handbook_209/?promo=newYear"
+        page = ProductPage(browser, link)
+        page.open()
+        page.add_to_cart()
+        page.solve_quiz_and_get_code()
+        page.good_was_added()

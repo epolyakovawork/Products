@@ -1,34 +1,42 @@
 from selenium.webdriver.common.by import By
-from selenium import webdriver
 from .base_page import BasePage
-from .main_page import MainPage
-from selenium import webdriver
-browser = webdriver.Chrome()
+from .locators import ProductPageLocators
+
 
 class ProductPage(BasePage):
-   
-    def should_be_add_to_basket_button(self):
-        basket = browser.find_element(*BasketLocators.ADD_BASKET)
-        #login_link = self.browser.find_element(By.CSS_SELECTOR, "#login_link")
-        basket.click()
-        print(basket.text)
-        time.sleep(5)
-        assert self.is_element_present(*BasketLocators.ADD_BASKET), "Add to basket is not presented"
-        ADD_BASKET = (By.CSS_SELECTOR, "btn.btn-lg.btn-primary.btn-add-to-basket")
+    def add_to_cart(self):
+        self.browser.find_element(*ProductPageLocators.ADD_TO_BASKET_BUTTON).click()
 
-    def solve_quiz_and_get_code(self):
-        alert = self.browser.switch_to.alert
-        x = alert.text.split(" ")[2]
-        answer = str(math.log(abs((12 * math.sin(float(x))))))
-        alert.send_keys(answer)
-        alert.accept()
-        try:
-            alert = self.browser.switch_to.alert
-            alert_text = alert.text
-            print(f"Your code: {alert_text}")
-            alert.accept()
-        except NoAlertPresentException:
-            print("No second alert presented")
+    def get_product_name(self):
+        return self.browser.find_element(By.CSS_SELECTOR, '.product_main > h1').text
 
+    def get_price(self):
+        return self.browser.find_element(By.CSS_SELECTOR, '.product_main > p.price_color').text
 
-   
+    def good_was_added(self):
+        self.should_be_message_of_success()
+        self.product_name_should_be_in_message(self.get_product_name())
+        self.should_be_message_basket_total()
+        self.price_in_basket_matches_product_price(self.get_price())
+
+    def should_be_message_of_success(self):
+        assert self.is_element_present(*ProductPageLocators.SUCCESS_MESSAGE), "Success message is missing"
+
+    def should_not_be_success_message(self):
+        assert self.is_not_element_present(
+            *ProductPageLocators.SUCCESS_MESSAGE), "Success message is presented, but should not be"
+
+    def product_name_should_be_in_message(self, product_name):
+        assert product_name == self.browser.find_element(
+            *ProductPageLocators.PRODUCT_NAME_IN_MESSAGE).text, "Wrong product name in the message"
+
+    def should_be_message_basket_total(self):
+        assert self.is_element_present(
+            *ProductPageLocators.MESSAGE_BASKET_TOTAL), "Basket total message is missing"
+
+    def price_in_basket_matches_product_price(self, price):
+        assert price == self.browser.find_element(
+            *ProductPageLocators.BASKET_TOTAL).text, "The price doesn't match"
+
+    def success_message_is_disappeared(self):
+        assert self.is_disappeared(*ProductPageLocators.SUCCESS_MESSAGE), "Success message wasn't disappeared"
